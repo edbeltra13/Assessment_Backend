@@ -1,0 +1,162 @@
+﻿@{
+    ViewBag.Title = "User List";
+}
+
+<h2>User Record</h2>
+
+<div class="float-end"><a class="btn btn-primary" style="margin-bottom:10px" onclick="PopupForm('@Url.Action("AddOrEdit","User")')"><i class="fa fa-plus"></i>Add New</a></div>
+<br>
+<div class="float-start"></div>
+<br>
+<div class="float-start"></div>
+
+<table id="UserTable" class="table table-striped table-bordered" style="width:100%">
+
+    <thead>
+        <tr>            
+            <th>UserName</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Skill</th>
+            <th>Hobby</th>
+            <th></th>
+        </tr>
+    </thead>
+</table>
+
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.css" rel="stylesheet" />
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+@section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.js"></script>
+
+    <script>
+        var Popup, dataTable;
+
+        $(document).ready(function () {
+            dataTable =  $("#UserTable").DataTable({
+
+                "ajax": {
+
+                    "url": "/User/GetData",
+                    "type": "GET",
+                    "datatype": "json"
+                },
+
+                "columns": [
+                    // { "data": "Id" },
+                    { "data": "username" },
+                    { "data": "mail" },
+                    { "data": "phoneNumber" },
+                    { "data": "skillsets" },
+                    { "data": "hobby" },
+                    {
+                        "data": "id", "render": function (data) {
+                            console.log(data);
+                            return "<a class='btn btn-default btn-sm' onclick=PopupForm('@Url.Action("AddOrEdit", "User")/" + data + "')><i class='fa fa-pencil'></i>Edit</a> <a class='btn btn-danger btn-sm' style='margin-left:5px' onclick=Delete(" + data + ")><i class='fa fa-trash'></i>Delete</a>";
+                        },
+
+                        "orderable": false,
+                        "searchable": false,
+                        "width" : "150px"
+                    }
+
+
+                ],
+
+                "language": {
+                    "emptyTable" : "No data found please click on <b>Add New </b> Button"
+                }
+
+            });
+        });
+
+        function PopupForm(url) {
+
+            var formDiv = $('<div/>');
+            $.get(url)
+                .done(function (response) {
+
+                    formDiv.html(response);
+
+                    Popup = formDiv.dialog({
+
+                        autoOpen : true,
+                        resizable : false,
+                        title : 'User Details',
+                        height : 500,
+                        width : 700,
+                        close: function () {
+
+                            Popup.dialog('destroy').remove();
+                        }
+
+                    });
+
+                });
+        }
+
+        function SubmitForm(form) {
+
+            $.validator.unobtrusive.parse(form);
+            if ($(form).valid()) {
+
+            $.ajax({
+                type: "POST",
+                url: form.action,
+                data: $(form).serialize(),
+                success: function (data) {
+
+                    if (data.success) {
+
+                        Popup.dialog('close');
+                        dataTable.ajax.reload();
+
+                        $.notify(data.message, {
+                            globalPosition: "top center",
+                            className:"success"
+                        })
+
+
+                    }
+                }
+                });
+            }
+
+            return false;
+
+        }
+
+        function Delete(id) {
+            if (confirm('Are you sure to Delete this record ?')) {
+
+                $.ajax({
+
+                    type: "POST",
+                    url: '@Url.Action("Delete", "User")/' + id,
+                    success: function (data) {
+
+                        if (data.success) {
+
+                            dataTable.ajax.reload();
+
+                            $.notify(data.message, {
+                                globalPosition: "top center",
+                                className: "success"
+                            })
+
+                        }
+                    }
+
+                });
+            }
+        }
+
+    </script>
+}
+
+
